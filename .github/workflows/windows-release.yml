@@ -1,0 +1,37 @@
+name: Windows app
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt pyinstaller
+      - name: Validate Python source
+        run: python -m compileall -q app.py stitch.py alignment.py viewer.py branding.py
+      - name: Build standalone Windows app
+        run: pyinstaller --noconfirm --clean --onefile --windowed --name 360Stitcher --icon assets/app.ico --add-data "assets;assets" app.py
+      - name: Package executable
+        shell: pwsh
+        run: Compress-Archive -Path dist/360Stitcher.exe -DestinationPath 360Stitcher-Windows.zip -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 360Stitcher-Windows
+          path: 360Stitcher-Windows.zip
+          if-no-files-found: error
+      - name: Publish tagged release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: gh release create "${{ github.ref_name }}" 360Stitcher-Windows.zip --title "360 Stitcher ${{ github.ref_name }}" --notes "Windows standalone app. Download the ZIP, extract it, and launch 360Stitcher.exe."

@@ -1,0 +1,12 @@
+.venv/
+.buildenv/
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.spec
+*.alignment.json
+Sample_results/
+PANO*.JPG
+PANO*.jpg
+*_panorama.jpg
